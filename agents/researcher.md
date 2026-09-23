@@ -1,8 +1,7 @@
 ---
 name: researcher
-description: Web researcher — searches the web and synthesizes findings
-tools: web_search, web_fetch, safe_bash
-model: openrouter/z-ai/glm-5.3
+description: Researcher — searches local course materials (PDFs, EPUBs) and the web to synthesize findings and verify facts
+tools: inspect_doc, read_doc_section, search_doc, read, web_search, web_fetch, safe_bash
 thinking: medium
 system-prompt: append
 auto-exit: true

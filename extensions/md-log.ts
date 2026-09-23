@@ -25,7 +25,7 @@
  * .md-link extension this was modeled on).
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -90,7 +90,7 @@ export default function mdLog(pi: ExtensionAPI) {
 	}
 
 	function userBlock(text: string): string {
-		return `> [!quote] YOU\n\n${text}`;
+		return `---\n> [!quote] 👤 TÚ\n>\n> ${text.split("\n").join("\n> ")}`;
 	}
 
 	// Skill declarations (`<skill name="..." ...> ...whole SKILL.md... </skill>`)
@@ -108,7 +108,9 @@ export default function mdLog(pi: ExtensionAPI) {
 	}
 
 	function assistantBlock(text: string): string {
-		return `> [!abstract] PI\n\n${text}`;
+		// Output clean markdown directly so headings (#, ##), LaTeX ($$, $),
+		// native callouts (> [!theorem]), and embeds render as a first-class textbook note.
+		return `${text}\n`;
 	}
 
 	function optionsList(options: Array<{ label: string }>): string[] {
@@ -293,14 +295,15 @@ export default function mdLog(pi: ExtensionAPI) {
 
 			const resolved = path.isAbsolute(filepath) ? filepath : path.resolve(ctx.cwd, filepath);
 
-			// The file must already exist — /md-log links into an existing note,
-			// it never creates one. This avoids silently scattering new files
-			// (and parent directories) around the vault from a typo'd path.
+			// If file does not exist, create parent directories and initialize the note cleanly
 			if (!fs.existsSync(resolved)) {
-				ctx.ui.notify(`File does not exist: ${resolved}`, "error");
-				return;
-			}
-			if (!fs.statSync(resolved).isFile()) {
+				const parentDir = path.dirname(resolved);
+				if (!fs.existsSync(parentDir)) {
+					fs.mkdirSync(parentDir, { recursive: true });
+				}
+				const title = path.basename(resolved, path.extname(resolved)).replace(/[-_]/g, " ");
+				fs.writeFileSync(resolved, `# ${title}\n\n`, "utf-8");
+			} else if (!fs.statSync(resolved).isFile()) {
 				ctx.ui.notify(`Not a file: ${resolved}`, "error");
 				return;
 			}
